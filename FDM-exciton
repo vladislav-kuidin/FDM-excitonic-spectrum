@@ -1,0 +1,1319 @@
+%Excitonic spectrum FD ODE algorithm
+
+clear
+
+format long
+
+uni=sqrt(-1);
+
+eps=1e-7;
+
+ 
+
+% WSe2 SiO_2 substrate
+
+r0=45.11;
+
+epstot=2.45;
+
+hp=3.31*1.13/r0;
+
+DeltE=1.97;
+
+ 
+
+% WSe2 hBN substrate
+
+r0=45.0;
+
+epstot=4.5;
+
+hp=3.31*1.13/r0;
+
+DeltE=1.89;
+
+ 
+
+ 
+
+% WS2 SiO_2 substrate
+
+%r0=37.89;
+
+%epstot=2.45;
+
+%hp=3.2*1.25/r0;
+
+%DeltE=2.4;
+
+ 
+
+ 
+
+% WS2 hBN substrate
+
+%r0=34.0;
+
+%epstot=4.35;
+
+%hp=3.2*1.25/r0;
+
+%DeltE=2.24;
+
+ 
+
+% MoS2 hBN substrate
+
+%r0=34.0;
+
+%epstot=4.4;
+
+%hp=3.193*1.1/r0;
+
+%DeltE=2.086;
+
+ 
+
+ 
+
+V0=14.38/epstot/r0;
+
+L=0;
+
+ 
+
+Rmax=20.0;
+
+Rmin=0.0;
+
+N=800;
+
+Ne1=100;
+
+En=zeros(Ne1,1);
+
+hr = Rmax/N;
+
+rn = zeros(N,1);
+
+pn = zeros(N,1);
+
+V = zeros(N,1);
+
+Vdir = zeros(N,1);
+
+Vdir2 = zeros(N,1);
+
+FVr = zeros(N,1);
+
+psi1 = zeros(N,1);
+
+psi2 = zeros(N,1);
+
+psi3 = zeros(N,1);
+
+psi4 = zeros(N,1);
+
+phi3 = zeros(N,1);
+
+phi4=zeros(N,1);
+
+Z = zeros(N,N);
+
+accur1=1e-7;
+
+cnorm=hr^0.0;
+
+ 
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    V(n)=quad(@(x)struve(x,r),0,pi/2,accur1)-pi/2*bessely(0,r);
+
+    Vdir(n)=quad(@(x)struvedir(x,r),0,pi/2,accur1)+pi/2*bessely(1,r);
+
+    Vdir2(n)=quad(@(x)struvedir2(x,r),0,pi/2,accur1)+pi/2*(bessely(0,r)-bessely(1,r)/r);
+
+end
+
+ 
+
+ 
+
+%for L=0
+
+Esp0=2.24;
+
+E1=2.235;
+
+E2=2.244;
+
+Esp1=2.328;
+
+E1=2.32;
+
+E2=2.33;
+
+ 
+
+%for L=1
+
+Esp0=2.301;
+
+E1=2.29;
+
+E2=2.31;
+
+Esp1=2.348;
+
+E1=2.345;
+
+E2=2.350;
+
+ 
+
+ 
+
+ 
+
+%L=10,n=0,1,2
+
+%E1=2.394;
+
+%E2=2.395;
+
+%E1=2.3951;
+
+%E2=2.3952;
+
+%E1=2.3958;
+
+%E2=2.3960;
+
+ 
+
+E1=2.235;
+
+E2=2.245;
+
+%E1=2.394;
+
+%E2=2.396;
+
+ 
+
+ 
+
+E1=2.0;
+
+E2=2.24;
+
+ 
+
+E1=1.9;
+
+E2=2.15;
+
+ 
+
+ 
+
+ 
+
+ 
+
+he=(E2-E1)/Ne1;
+
+ 
+
+E=E1;
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+detZ=det(Z)
+
+cnorm=exp(-log(abs(detZ))/N+log(cnorm));
+
+%stop
+
+ 
+
+for ne=1:Ne1
+
+E=E1+he*ne;
+
+En(ne)=E;
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+detZ=det(Z);
+
+detZn(ne)=detZ;
+
+ne
+
+cnorm=exp(-log(abs(detZ))/N+log(cnorm));
+
+end
+
+ 
+
+plot(En,detZn)
+
+grid on
+
+ 
+
+%plot(En,detZn/detZn(1))
+
+%plot(En,log10(abs(detZn./detZn(1))))
+
+ 
+
+figure
+
+plot(En,log10(abs(detZn)))
+
+grid on
+
+ 
+
+%stop
+
+ 
+
+ 
+
+ 
+
+for ne=1:Ne1-1
+
+E=E1+he*ne;
+
+En(ne)=E;
+
+if detZn(ne+1)*detZn(ne) < 0
+
+    Er=(En(ne+1)+En(ne))/2;
+
+    detZnorm=detZn(ne);
+
+end
+
+end
+
+ 
+
+E=Er;
+
+cnorm=exp(-log(abs(detZnorm))/N+log(cnorm));
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+det(Z)
+
+[Vr,Dr] = eig(Z);
+
+test=10000;
+
+for n=1:N
+
+    if abs(Dr(n,n)) < test
+
+    nv=n;
+
+    test=abs(Dr(n,n));
+
+    end
+
+end
+
+for n=1:N
+
+phi3(n)=Vr(n,nv);
+
+phi2=phi3(n)*DeltE/(V0*V(n)+E);
+
+psi2(n)=(phi2+phi3(n))/2;
+
+psi3(n)=(phi2-phi3(n))/2;
+
+end
+
+for n=2:N-1
+
+phi4(n)=2*uni*hp/(E+V0*V(n))*(phi3(n+1)-phi3(n-1))/2/hr;
+
+end
+
+phi4(1)=2*uni*hp/(E+V0*V(1))*(phi3(2)-phi3(1))/hr;
+
+phi4(N)=2*uni*hp/(E+V0*V(N))*(phi3(N)-phi3(N-1))/hr;
+
+ 
+
+figure
+
+plot(rn,phi3/max(abs(phi3)),'k')
+
+grid on
+
+ 
+
+if L == 0
+
+psi1=phi4;
+
+figure
+
+plot(rn,abs(psi1)/max(abs(psi2)),'b')
+
+hold on
+
+plot(rn,abs(psi2)/max(abs(psi2)),'m')
+
+hold on
+
+plot(rn,abs(psi3)/max(abs(psi2)),'r')
+
+grid on
+
+else
+
+for n=1:N
+
+r=hr*n;
+
+phi1=phi3(n)*2*uni*hp*L/r/(E+V0*V(n));
+
+psi1(n)=(phi1+phi4(n))/2;
+
+psi4(n)=(phi1-phi4(n))/2;
+
+end
+
+figure
+
+plot(rn,abs(psi1)/max(abs(psi2)),'b')
+
+hold on
+
+plot(rn,abs(psi4)/max(abs(psi2)),'k')
+
+hold on
+
+plot(rn,abs(psi2)/max(abs(psi2)),'m')
+
+hold on
+
+plot(rn,abs(psi3)/max(abs(psi2)),'r')
+
+grid on
+
+end
+
+ 
+
+Enum=Er
+
+Eb=DeltE-Enum
+
+ 
+
+% NORMALIZATION
+
+ 
+
+if L == 0
+
+psi1=phi4;
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum=2*sum1+sum2+sum3;
+
+psi1=psi1/sqrt(sum);
+
+psi2=psi2/sqrt(sum);
+
+psi3=psi3/sqrt(sum);
+
+figure
+
+plot(rn,abs(psi1).^2,'b')
+
+hold on
+
+plot(rn,abs(psi2).^2,'m')
+
+hold on
+
+plot(rn,abs(psi3).^2,'r')
+
+grid on
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum=2*sum1+sum2+sum3
+
+else
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+sum4=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+    sum4=sum4+r*abs(psi4(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum4=sum4*hr;
+
+sum=sum1+sum4+sum2+sum3;
+
+psi1=psi1/sqrt(sum);
+
+psi2=psi2/sqrt(sum);
+
+psi3=psi3/sqrt(sum);
+
+psi4=psi4/sqrt(sum);
+
+figure
+
+plot(rn,abs(psi1).^2,'b')
+
+hold on
+
+plot(rn,abs(psi4).^2,'k')
+
+hold on
+
+plot(rn,abs(psi2).^2,'m')
+
+hold on
+
+plot(rn,abs(psi3).^2,'r')
+
+grid on
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+sum4=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+    sum4=sum4+r*abs(psi4(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum4=sum4*hr;
+
+sum=sum1+sum4+sum2+sum3
+
+end
+
+%Excitonic spectrum FD ODE algorithm
+
+clear
+
+format long
+
+uni=sqrt(-1);
+
+eps=1e-7;
+
+ 
+
+% WSe2 SiO_2 substrate
+
+r0=45.11;
+
+epstot=2.45;
+
+hp=3.31*1.13/r0;
+
+DeltE=1.97;
+
+ 
+
+% WSe2 hBN substrate
+
+r0=45.0;
+
+epstot=4.5;
+
+hp=3.31*1.13/r0;
+
+DeltE=1.89;
+
+ 
+
+ 
+
+% WS2 SiO_2 substrate
+
+%r0=37.89;
+
+%epstot=2.45;
+
+%hp=3.2*1.25/r0;
+
+%DeltE=2.4;
+
+ 
+
+ 
+
+% WS2 hBN substrate
+
+%r0=34.0;
+
+%epstot=4.35;
+
+%hp=3.2*1.25/r0;
+
+%DeltE=2.24;
+
+ 
+
+% MoS2 hBN substrate
+
+%r0=34.0;
+
+%epstot=4.4;
+
+%hp=3.193*1.1/r0;
+
+%DeltE=2.086;
+
+ 
+
+ 
+
+V0=14.38/epstot/r0;
+
+L=0;
+
+ 
+
+Rmax=20.0;
+
+Rmin=0.0;
+
+N=800;
+
+Ne1=100;
+
+En=zeros(Ne1,1);
+
+hr = Rmax/N;
+
+rn = zeros(N,1);
+
+pn = zeros(N,1);
+
+V = zeros(N,1);
+
+Vdir = zeros(N,1);
+
+Vdir2 = zeros(N,1);
+
+FVr = zeros(N,1);
+
+psi1 = zeros(N,1);
+
+psi2 = zeros(N,1);
+
+psi3 = zeros(N,1);
+
+psi4 = zeros(N,1);
+
+phi3 = zeros(N,1);
+
+phi4=zeros(N,1);
+
+Z = zeros(N,N);
+
+accur1=1e-7;
+
+cnorm=hr^0.0;
+
+ 
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    V(n)=quad(@(x)struve(x,r),0,pi/2,accur1)-pi/2*bessely(0,r);
+
+    Vdir(n)=quad(@(x)struvedir(x,r),0,pi/2,accur1)+pi/2*bessely(1,r);
+
+    Vdir2(n)=quad(@(x)struvedir2(x,r),0,pi/2,accur1)+pi/2*(bessely(0,r)-bessely(1,r)/r);
+
+end
+
+ 
+
+ 
+
+%for L=0
+
+Esp0=2.24;
+
+E1=2.235;
+
+E2=2.244;
+
+Esp1=2.328;
+
+E1=2.32;
+
+E2=2.33;
+
+ 
+
+%for L=1
+
+Esp0=2.301;
+
+E1=2.29;
+
+E2=2.31;
+
+Esp1=2.348;
+
+E1=2.345;
+
+E2=2.350;
+
+ 
+
+ 
+
+ 
+
+%L=10,n=0,1,2
+
+%E1=2.394;
+
+%E2=2.395;
+
+%E1=2.3951;
+
+%E2=2.3952;
+
+%E1=2.3958;
+
+%E2=2.3960;
+
+ 
+
+E1=2.235;
+
+E2=2.245;
+
+%E1=2.394;
+
+%E2=2.396;
+
+ 
+
+ 
+
+E1=2.0;
+
+E2=2.24;
+
+ 
+
+E1=1.9;
+
+E2=2.15;
+
+ 
+
+ 
+
+ 
+
+ 
+
+he=(E2-E1)/Ne1;
+
+ 
+
+E=E1;
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+detZ=det(Z)
+
+cnorm=exp(-log(abs(detZ))/N+log(cnorm));
+
+%stop
+
+ 
+
+for ne=1:Ne1
+
+E=E1+he*ne;
+
+En(ne)=E;
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+detZ=det(Z);
+
+detZn(ne)=detZ;
+
+ne
+
+cnorm=exp(-log(abs(detZ))/N+log(cnorm));
+
+end
+
+ 
+
+plot(En,detZn)
+
+grid on
+
+ 
+
+%plot(En,detZn/detZn(1))
+
+%plot(En,log10(abs(detZn./detZn(1))))
+
+ 
+
+figure
+
+plot(En,log10(abs(detZn)))
+
+grid on
+
+ 
+
+%stop
+
+ 
+
+ 
+
+ 
+
+for ne=1:Ne1-1
+
+E=E1+he*ne;
+
+En(ne)=E;
+
+if detZn(ne+1)*detZn(ne) < 0
+
+    Er=(En(ne+1)+En(ne))/2;
+
+    detZnorm=detZn(ne);
+
+end
+
+end
+
+ 
+
+E=Er;
+
+cnorm=exp(-log(abs(detZnorm))/N+log(cnorm));
+
+for n = 1:N
+
+    r=Rmin+n*hr;
+
+    rn(n)=r;
+
+    pn(n)=1/r-V0*Vdir(n)/(E+V0*V(n));
+
+    qn=((E+V0*V(n))^2-DeltE^2)/4/hp/hp-(L/r)^2;
+
+    Z(n,n) = (1-qn*hr^2/2)*cnorm;
+
+end
+
+for n = 1:N-1
+
+    Z(n+1,n) = (hr*pn(n+1)/4-1/2)*cnorm;
+
+    Z(n,n+1) =-(hr*pn(n)/4+1/2)*cnorm;
+
+end
+
+det(Z)
+
+[Vr,Dr] = eig(Z);
+
+test=10000;
+
+for n=1:N
+
+    if abs(Dr(n,n)) < test
+
+    nv=n;
+
+    test=abs(Dr(n,n));
+
+    end
+
+end
+
+for n=1:N
+
+phi3(n)=Vr(n,nv);
+
+phi2=phi3(n)*DeltE/(V0*V(n)+E);
+
+psi2(n)=(phi2+phi3(n))/2;
+
+psi3(n)=(phi2-phi3(n))/2;
+
+end
+
+for n=2:N-1
+
+phi4(n)=2*uni*hp/(E+V0*V(n))*(phi3(n+1)-phi3(n-1))/2/hr;
+
+end
+
+phi4(1)=2*uni*hp/(E+V0*V(1))*(phi3(2)-phi3(1))/hr;
+
+phi4(N)=2*uni*hp/(E+V0*V(N))*(phi3(N)-phi3(N-1))/hr;
+
+ 
+
+figure
+
+plot(rn,phi3/max(abs(phi3)),'k')
+
+grid on
+
+ 
+
+if L == 0
+
+psi1=phi4;
+
+figure
+
+plot(rn,abs(psi1)/max(abs(psi2)),'b')
+
+hold on
+
+plot(rn,abs(psi2)/max(abs(psi2)),'m')
+
+hold on
+
+plot(rn,abs(psi3)/max(abs(psi2)),'r')
+
+grid on
+
+else
+
+for n=1:N
+
+r=hr*n;
+
+phi1=phi3(n)*2*uni*hp*L/r/(E+V0*V(n));
+
+psi1(n)=(phi1+phi4(n))/2;
+
+psi4(n)=(phi1-phi4(n))/2;
+
+end
+
+figure
+
+plot(rn,abs(psi1)/max(abs(psi2)),'b')
+
+hold on
+
+plot(rn,abs(psi4)/max(abs(psi2)),'k')
+
+hold on
+
+plot(rn,abs(psi2)/max(abs(psi2)),'m')
+
+hold on
+
+plot(rn,abs(psi3)/max(abs(psi2)),'r')
+
+grid on
+
+end
+
+ 
+
+Enum=Er
+
+Eb=DeltE-Enum
+
+ 
+
+% NORMALIZATION
+
+ 
+
+if L == 0
+
+psi1=phi4;
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum=2*sum1+sum2+sum3;
+
+psi1=psi1/sqrt(sum);
+
+psi2=psi2/sqrt(sum);
+
+psi3=psi3/sqrt(sum);
+
+figure
+
+plot(rn,abs(psi1).^2,'b')
+
+hold on
+
+plot(rn,abs(psi2).^2,'m')
+
+hold on
+
+plot(rn,abs(psi3).^2,'r')
+
+grid on
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum=2*sum1+sum2+sum3
+
+else
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+sum4=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+    sum4=sum4+r*abs(psi4(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum4=sum4*hr;
+
+sum=sum1+sum4+sum2+sum3;
+
+psi1=psi1/sqrt(sum);
+
+psi2=psi2/sqrt(sum);
+
+psi3=psi3/sqrt(sum);
+
+psi4=psi4/sqrt(sum);
+
+figure
+
+plot(rn,abs(psi1).^2,'b')
+
+hold on
+
+plot(rn,abs(psi4).^2,'k')
+
+hold on
+
+plot(rn,abs(psi2).^2,'m')
+
+hold on
+
+plot(rn,abs(psi3).^2,'r')
+
+grid on
+
+sum1=0;
+
+sum2=0;
+
+sum3=0;
+
+sum4=0;
+
+for n=1:N
+
+    r=n*hr;
+
+    sum1=sum1+r*abs(psi1(n))^2;
+
+    sum2=sum2+r*abs(psi2(n))^2;
+
+    sum3=sum3+r*abs(psi3(n))^2;
+
+    sum4=sum4+r*abs(psi4(n))^2;
+
+end
+
+sum1=sum1*hr;
+
+sum2=sum2*hr;
+
+sum3=sum3*hr;
+
+sum4=sum4*hr;
+
+sum=sum1+sum4+sum2+sum3
+
+end
